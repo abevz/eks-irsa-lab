@@ -1,32 +1,24 @@
-# OpenTofu / Terraform state and plans — never commit
+# From PROJECTS/EKS-IRSA-Lab-Runbook.md §0.5 (keep .terraform.lock.hcl committed)
+**/.terraform/
 *.tfstate
 *.tfstate.*
-.terraform/
-tfplan*
-*.tfplan
-crash.log
-crash.*.log
-
-# Variable files carry account-specific values; commit only examples
+*.tfstate.backup
+**/tfplan*
+**/tfdestroy*
 *.tfvars
 *.tfvars.json
 !*.tfvars.example
-
-# Kubernetes credentials
-kubeconfig*
-.kube/
-
-# Raw evidence (unredacted command output with IDs/ARNs)
-evidence/raw/
-
-# Local environment and secrets
+!*.tfvars.json.example
+**/backend.hcl
+**/kubeconfig*
 .env
 .env.*
 !.env.example
+evidence/raw/
+
+# Local extras
 *.pem
 *.key
-
-# Editor / OS
 .DS_Store
 *.swp
 .idea/
