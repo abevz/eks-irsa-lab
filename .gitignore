@@ -1,0 +1,33 @@
+# OpenTofu / Terraform state and plans — never commit
+*.tfstate
+*.tfstate.*
+.terraform/
+tfplan*
+*.tfplan
+crash.log
+crash.*.log
+
+# Variable files carry account-specific values; commit only examples
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Kubernetes credentials
+kubeconfig*
+.kube/
+
+# Raw evidence (unredacted command output with IDs/ARNs)
+evidence/raw/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
