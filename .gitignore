@@ -26,3 +26,4 @@ evidence/raw/
 .idea/
 .vscode/
 .envrc
+infra/modules/**/.terraform.lock.hcl
