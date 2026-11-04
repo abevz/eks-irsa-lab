@@ -34,12 +34,25 @@ with account-specific values stays in `evidence/raw/`, which is not committed.
 
 ## Repository hygiene
 
-Account IDs, ARNs, hosted zone IDs, state bucket names, `backend.hcl` and
-kubeconfig files are never committed. They come from environment variables or
-git-ignored files. `scripts/check-staged-public.py` rejects staged additions
-with a 12-digit account ID or an ARN, and any binary diff; enable it on a fresh
-clone with `ln -s ../../scripts/check-staged-public.py .git/hooks/pre-commit`.
-It does not replace a manual review of the diff and of `git log -p`.
+The AWS account ID is public by decision: it lives in the committed
+`infra/root.hcl`, which also derives the state bucket name from it, and
+`allowed_account_ids` in the generated provider refuses any other account.
+ARNs, access keys, kubeconfig files and personal values are never committed;
+personal values go to the git-ignored `infra/local.hcl`.
+
+`scripts/check-staged-public.py` rejects staged additions that contain an ARN
+or an AWS access key (`AKIA…`/`ASIA…`), and any binary diff. The repository is
+used as a bare clone with worktrees, so hooks live in `.bare/hooks/` and are
+shared by every worktree. Install a wrapper that runs the script from the
+worktree being committed:
+
+```sh
+printf '#!/bin/sh\nexec "$(git rev-parse --show-toplevel)/scripts/check-staged-public.py"\n' > .bare/hooks/pre-commit
+chmod +x .bare/hooks/pre-commit
+```
+
+In a normal (non-bare) clone, use `.git/hooks/pre-commit` instead. The check
+does not replace a manual review of the diff and of `git log -p`.
 
 ## License
 

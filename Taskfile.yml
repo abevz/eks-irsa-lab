@@ -1,0 +1,105 @@
+# Taskfile.yml
+version: "3"
+
+vars:
+  REGION:
+    sh: sed -n 's/^  region *= *"\([a-z0-9-]*\)".*/\1/p' infra/root.hcl
+  CLUSTER:
+    sh: sed -n 's/^  cluster_name *= *"\([a-z0-9-]*\)".*/\1/p' infra/root.hcl
+  STACK: infra/lab
+  ACCOUNT_ID:
+    sh: sed -n 's/^ *account_id *= *"\([0-9]\{12\}\)".*/\1/p' infra/root.hcl
+  UNITS_UP: network cluster identity
+  UNITS_DOWN: identity cluster network
+
+env:
+  TG_NON_INTERACTIVE: "false"
+
+tasks:
+  check:
+    cmds:
+      - terragrunt hcl fmt --check
+      - tofu fmt -check -recursive infra/modules
+      - terragrunt run --all --working-dir infra -- validate
+      - tflint --recursive
+      - trivy config infra
+      - checkov -d infra
+
+  guard:
+    cmds:
+      - test -n "{{.ACCOUNT_ID}}"
+      - test "$(aws sts get-caller-identity --query Account --output text)" = "{{.ACCOUNT_ID}}"
+
+  print-account-id:
+    cmds:
+      - 'echo "{{.ACCOUNT_ID}}"'
+
+  generate:
+    dir: "{{.STACK}}"
+    cmds: [terragrunt stack generate]
+
+  unit-apply:
+    interactive: true
+    requires: { vars: [UNIT] }
+    cmds:
+      - task: guard
+      - terragrunt run --working-dir {{.UNIT}} -- plan -out=tfplan
+      - terragrunt run --working-dir {{.UNIT}} -- show tfplan
+      - 'read -r -p "apply {{.UNIT}}? type yes: " a && [ "$a" = yes ]'
+      - terragrunt run --working-dir {{.UNIT}} -- apply tfplan
+
+  up:
+    interactive: true
+    cmds:
+      - task: generate
+      - for: { var: UNITS_UP }
+        task: unit-apply
+        vars: { UNIT: "{{.STACK}}/.terragrunt-stack/{{.ITEM}}" }
+
+  kubeconfig:
+    cmds:
+      - task: guard
+      - aws eks update-kubeconfig --name {{.CLUSTER}} --region {{.REGION}} --kubeconfig "$KUBECONFIG"
+
+  destroy:
+    interactive: true
+    cmds:
+      - task: cleanup-k8s
+      - for: { var: UNITS_DOWN }
+        task: unit-destroy
+        vars: { UNIT: "{{.STACK}}/.terragrunt-stack/{{.ITEM}}" }
+
+  unit-destroy:
+    interactive: true
+    requires: { vars: [UNIT] }
+    cmds:
+      - terragrunt run --working-dir {{.UNIT}} -- plan -destroy -out=tfdestroy
+      - terragrunt run --working-dir {{.UNIT}} -- show tfdestroy
+      - 'read -r -p "destroy {{.UNIT}}? type yes: " a && [ "$a" = yes ]'
+      - terragrunt run --working-dir {{.UNIT}} -- apply tfdestroy
+
+  snapshot-cleanup:
+    cmds:
+      - task: guard
+      - ./scripts/capture-cleanup-inventory.sh {{.ACCOUNT_ID}} {{.REGION}} {{.STACK}} evidence/raw/cleanup-targets.json
+
+  cleanup-k8s:
+    cmds:
+      - task: snapshot-cleanup
+      - ./scripts/cleanup-kubernetes.sh {{.ACCOUNT_ID}} {{.REGION}} {{.CLUSTER}}
+      - sleep 60
+
+  create-bootstrap-secret:
+    cmds:
+      - task: guard
+      - ./scripts/create-bootstrap-secret.sh {{.ACCOUNT_ID}} {{.REGION}} eks-lab/demo
+
+  cleanup-bootstrap:
+    cmds:
+      - task: guard
+      - ./scripts/delete-bootstrap-secret.sh {{.ACCOUNT_ID}} {{.REGION}} eks-lab/demo
+
+  audit:
+    cmds:
+      - task: guard
+      - ./scripts/audit-cleanup.sh {{.ACCOUNT_ID}} {{.REGION}} evidence/raw/cleanup-targets.json
