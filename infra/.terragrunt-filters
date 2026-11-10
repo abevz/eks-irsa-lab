@@ -1,0 +1,2 @@
+# Stack templates: rendered into lab/.terragrunt-stack, never run directly
+!./units/**

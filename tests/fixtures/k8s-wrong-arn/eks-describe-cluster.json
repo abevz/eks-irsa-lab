@@ -1,0 +1,1 @@
+{"cluster":{"name":"eks-lab","arn":"arn:aws:eks:eu-central-1:444455556666:cluster/eks-lab","endpoint":"https://ABC123.gr7.eu-central-1.eks.amazonaws.com","status":"ACTIVE","resourcesVpcConfig":{"vpcId":"vpc-0aaa"}}}

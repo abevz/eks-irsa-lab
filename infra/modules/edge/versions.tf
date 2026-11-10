@@ -1,9 +1,10 @@
+# infra/modules/edge/versions.tf
 terraform {
-  required_version = "= 1.13.2"
+  required_version = ">= 1.13"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 5.100.0"
+      version = "~> 5.100"
     }
   }
 }

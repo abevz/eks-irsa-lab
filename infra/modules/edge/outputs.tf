@@ -1,4 +1,4 @@
-# infra/modules/edge/output.tf
+# infra/modules/edge/outputs.tf
 output "certificate_arn" {
   value       = aws_acm_certificate_validation.wildcard.certificate_arn
   description = "Validated wildcard certificate for the ALB"

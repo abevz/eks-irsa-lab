@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Fake kubectl for tests. Logs every call to $FIXTURES_LOG.
+#   config view ...   -> prints $FIXTURES/kubectl-server.txt
+#   get crd ...       -> exit code from $FIXTURES/kubectl-crd.rc (0 = Argo installed)
+#   delete ...        -> succeeds
+set -Eeuo pipefail
+printf 'kubectl %s\n' "$*" >> "${FIXTURES_LOG:-/dev/null}"
+dir="${FIXTURES:?FIXTURES not set}"
+case "$1 $2" in
+  "config view") cat "$dir/kubectl-server.txt" ;;
+  "get crd")     exit "$(cat "$dir/kubectl-crd.rc" 2>/dev/null || echo 1)" ;;
+  "delete "*)    exit 0 ;;
+  *) echo "fake kubectl: unexpected call: $*" >&2; exit 99 ;;
+esac
