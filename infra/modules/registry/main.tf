@@ -1,5 +1,6 @@
 # infra/modules/registry/main.tf
 resource "aws_ecr_repository" "this" {
+  #checkov:skip=CKV_AWS_136:AES256 (AWS-managed) encryption is enough for the lab; a CMK adds cost
   name                 = var.name
   image_tag_mutability = "IMMUTABLE"
   image_scanning_configuration { scan_on_push = true }

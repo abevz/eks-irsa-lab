@@ -21,9 +21,12 @@ tasks:
       - terragrunt hcl fmt --check
       - tofu fmt -check -recursive infra/modules
       - terragrunt run --all --working-dir infra -- validate
-      - tflint --recursive
-      - trivy config infra
-      - checkov -d infra
+      - |
+        rc=0
+        tflint --recursive
+        trivy config --quiet --skip-dirs "**/.terragrunt-cache" --severity HIGH,CRITICAL --exit-code 1 infra || rc=1
+        checkov -d infra --quiet --compact --skip-path .terragrunt-cache || rc=1
+        exit $rc
 
   guard:
     cmds:

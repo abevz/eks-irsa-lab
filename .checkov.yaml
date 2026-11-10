@@ -1,0 +1,5 @@
+# Project-wide checkov decisions
+skip-check:
+  # Registry modules are pinned to exact versions (e.g. 20.37.2); a git commit pin
+  # does not apply to Terraform Registry sources.
+  - CKV_TF_1
