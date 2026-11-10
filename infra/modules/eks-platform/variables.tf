@@ -19,4 +19,12 @@ variable "kubernetes_version" {
   description = "EKS minor version, e.g. 1.36; upgrade = change it in the unit (2.6)"
 }
 
+variable "public_access_cidrs" {
+  type        = list(string)
+  description = "CIDRs allowed to reach the public EKS API endpoint"
 
+  validation {
+    condition     = !contains(var.public_access_cidrs, "0.0.0.0/0")
+    error_message = "The EKS API must not be open to 0.0.0.0/0."
+  }
+}

@@ -23,8 +23,9 @@ dependency "network" {
 }
 
 inputs = {
-  vpc_id             = dependency.network.outputs.vpc_id
-  private_subnet_ids = dependency.network.outputs.private_subnet_ids
-  cluster_name       = include.root.locals.cluster_name
-  kubernetes_version = "1.36"
+  vpc_id              = dependency.network.outputs.vpc_id
+  private_subnet_ids  = dependency.network.outputs.private_subnet_ids
+  cluster_name        = include.root.locals.cluster_name
+  public_access_cidrs = try(include.root.locals.local_overrides.admin_cidrs, ["203.0.113.1/32"])
+  kubernetes_version  = "1.36"
 }
