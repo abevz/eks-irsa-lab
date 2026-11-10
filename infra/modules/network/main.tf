@@ -1,4 +1,17 @@
 # infra/modules/network/main.tf — thin wrapper over the community VPC module: pins the subnet tags the ALB controller needs
+data "aws_availability_zones" "available" {
+  #checkov:skip=CKV_AWS_394:slice(names, 0, 2) takes the first two sorted AZs; a newly added AZ sorts after them
+  state = "available"
+
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
+
+locals {
+  azs = slice(data.aws_availability_zones.available.names, 0, 2)
+}
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -7,9 +20,9 @@ module "vpc" {
   name = var.name
   cidr = "10.0.0.0/16"
 
-  azs             = ["eu-central-1a", "eu-central-1b"]
-  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
-  private_subnets = ["10.0.11.0/24", "10.0.12.0/24"]
+  azs             = local.azs
+  public_subnets  = [for i, _ in local.azs : cidrsubnet("10.0.0.0/16", 8, i + 1)]
+  private_subnets = [for i, _ in local.azs : cidrsubnet("10.0.0.0/16", 8, i + 11)]
 
   enable_nat_gateway     = true
   single_nat_gateway     = true
