@@ -33,6 +33,12 @@ tasks:
       - test -n "{{.ACCOUNT_ID}}"
       - test "$(aws sts get-caller-identity --query Account --output text)" = "{{.ACCOUNT_ID}}"
 
+  test:
+    desc: Shell tests for the cleanup scripts against a fake aws CLI (no cloud)
+    cmds:
+      - shellcheck -x -P scripts scripts/*.sh scripts/lib/*.sh tests/run.sh tests/bin/aws
+      - ./tests/run.sh
+
   print-account-id:
     cmds:
       - 'echo "{{.ACCOUNT_ID}}"'
@@ -84,13 +90,12 @@ tasks:
   snapshot-cleanup:
     cmds:
       - task: guard
-      - ./scripts/capture-cleanup-inventory.sh {{.ACCOUNT_ID}} {{.REGION}} {{.STACK}} evidence/raw/cleanup-targets.json
+      - ./scripts/capture-cleanup-inventory.sh {{.ACCOUNT_ID}} {{.REGION}} {{.CLUSTER}} evidence/raw/cleanup-targets.json
 
   cleanup-k8s:
     cmds:
       - task: snapshot-cleanup
       - ./scripts/cleanup-kubernetes.sh {{.ACCOUNT_ID}} {{.REGION}} {{.CLUSTER}}
-      - sleep 60
 
   create-bootstrap-secret:
     cmds:

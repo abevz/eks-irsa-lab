@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Fake aws CLI for tests: answers "<service> <operation>" from $FIXTURES/<service>-<operation>.json.
+# Optional <name>.rc (exit code) and <name>.stderr. Every call is appended to $FIXTURES_LOG.
+set -Eeuo pipefail
+name="$1-$2"
+printf '%s\n' "$*" >> "${FIXTURES_LOG:-/dev/null}"
+dir="${FIXTURES:?FIXTURES not set}"
+[[ -f "$dir/$name.stderr" ]] && cat "$dir/$name.stderr" >&2
+[[ -f "$dir/$name.json" ]] && cat "$dir/$name.json"
+if [[ -f "$dir/$name.rc" ]]; then exit "$(cat "$dir/$name.rc")"; fi
+[[ -f "$dir/$name.json" ]] || { echo "fake aws: no fixture for '$name'" >&2; exit 99; }
